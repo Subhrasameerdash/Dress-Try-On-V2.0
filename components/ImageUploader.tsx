@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { UploadedImage } from '../types';
-import { UploadIcon, RetryIcon } from './icons';
+import { UploadIcon, RetryIcon, ExpandIcon, CompressIcon } from './icons';
 
 interface ImageUploaderProps {
   onImageAdd: (image: UploadedImage) => void;
@@ -13,6 +13,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageAdd }) => {
   const [uploadedImage, setUploadedImage] = useState<UploadedImage | null>(null);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fitMode, setFitMode] = useState<'contain' | 'cover'>('contain');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const processFile = useCallback((file: File) => {
@@ -25,6 +26,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageAdd }) => {
         return;
     }
     setError(null);
+    setFitMode('contain'); // Reset for new image
 
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -79,9 +81,12 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageAdd }) => {
   const handleUploadClick = () => fileInputRef.current?.click();
 
   const handleClearUploader = () => {
-    // We don't revoke the object URL here because the parent component (App) now holds a reference to it.
-    // The parent is responsible for revoking it when the session is reset.
     setUploadedImage(null);
+    setFitMode('contain');
+  };
+  
+  const handleToggleFitMode = () => {
+    setFitMode(prev => prev === 'contain' ? 'cover' : 'contain');
   };
 
 
@@ -97,9 +102,26 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageAdd }) => {
       />
 
       {uploadedImage ? (
-         <div className="w-full h-full relative">
-            <img src={uploadedImage.url} alt="User upload" className="w-full h-full object-cover" />
-             <div className="absolute bottom-5 left-1/2 -translate-x-1/2 w-full px-4 flex justify-center">
+         <div className="w-full h-full relative flex items-center justify-center p-2 bg-stone-200">
+            <img
+                src={uploadedImage.url}
+                alt="User upload"
+                className={`
+                    max-w-full max-h-full rounded-md shadow-lg transition-all duration-300
+                    ${fitMode === 'contain' ? 'object-contain' : 'object-cover w-full h-full'}
+                `}
+            />
+             <div className="absolute top-2 right-2">
+                <button
+                    onClick={handleToggleFitMode}
+                    className="p-2 bg-gray-700 bg-opacity-60 text-white font-semibold rounded-full shadow-lg hover:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-white"
+                    aria-label={fitMode === 'contain' ? 'Fill frame' : 'Fit to frame'}
+                    title={fitMode === 'contain' ? 'Fill frame' : 'Fit to frame'}
+                >
+                    {fitMode === 'contain' ? <ExpandIcon className="w-5 h-5" /> : <CompressIcon className="w-5 h-5" />}
+                </button>
+            </div>
+             <div className="absolute bottom-5 left-1/2 -translate-x-1/2 w-auto flex justify-center">
                  <button
                     onClick={handleClearUploader}
                     className="h-14 px-6 bg-gray-700 bg-opacity-80 text-white font-semibold rounded-lg shadow-lg hover:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-white flex items-center space-x-2"
