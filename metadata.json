@@ -1,0 +1,7 @@
+{
+  "name": "Creative Studio v2.0",
+  "description": "An application that allows users to perform virtual try-ons, edit photos with text prompts, and generate videos from images using Gemini and Veo.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
